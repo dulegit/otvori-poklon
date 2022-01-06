@@ -1,19 +1,20 @@
 <template>
 <div class="main" :class="{'show-all': mainClass}">
 	<transition name="is-animating" appear>
-		<div class="counter" :class="{'is-animating': isCounterAnimating}">
+		<div class="counter" :style="{'height': 'calc(100vh - '+headingHeight+'px)'}" :class="{'is-animating': isCounterAnimating}">
 			<span>{{currentId}}</span>
 		</div>
 	</transition>
 	<div class="container">
-		<div class="heading">
+		<div ref="headRef" class="heading" :class="{'is-showing': showInfoBox}">
+			<div class="heading-back" :style="{'top': headingHeight+'px'}"></div>
 			<div class="heading-title">Женице моја, срећан ти рођендан!!!</div>
 			<div class="heading-description">Пошто ниси отишла на Дивчибаре за свој рођендан, био сам у могућности да ти поклоним нешто!</div>
 		</div>
-		<div class="gift">
-			<button class="gift-button gift__button" :class="{'is-hidden': hideButton}" @click="setAnimations">Otvori poklon</button>
+		<div class="gift" :style="{'height': 'calc(100vh - '+headingHeight+'px)'}">
+			<button class="gift-button gift__button" :class="{'is-hidden': hideButton}" @click="setAnimations">Отвори поклон</button>
 			<transition-group name="is-animating" tag="div" @animationend="leaveAnimating" appear>
-				<div :ref="'box-'+box" v-for="box in [1,2,3,4,5,6,7]" :key="box" class="gift-box" :class="['gift-box--level-'+(box), {'is-showing': box === currentId, 'is-hidding': hidePrev && box > currentId, 'is-animating': box === currentId && isAnimating }, classBox]" :style="{'z-index': box}">
+				<div v-for="box in [1,2,3,4,5,6,7]" :key="box" class="gift-box" :class="['gift-box--level-'+(box), {'is-showing': box === currentId, 'is-hidding': hidePrev && box > currentId, 'is-animating': box === currentId && isAnimating }, classBox]" :style="{'z-index': box}">
 					
 						<div class="gift-box-top">
 							<span></span>
@@ -26,19 +27,19 @@
 				</div>
 			</transition-group>
 		</div>
-		<div class="info-box" :class="{'is-showing': showInfoBox, 'info-box--final': showFinalMessage}">
+		<div class="info-box" :style="{'height': 'calc(100vh - '+headingHeight+'px)'}" :class="{'is-showing': showInfoBox || showFinalMessage, 'info-box--final': showFinalMessage}">
 			<div class="info-box__content">
 				<div v-if="counter !== 0" class="info-box__title">
-					Ево га поклон стиже на време, ево само што није. Сачекај још {{counter}} сек.
+					Ево га поклон стиже на време, ево само што није. Сачекај још<br><span style="font-style: normal; font-weight: 600; font-size: 40px;">{{counter}}</span> сек.
 				</div>
 				<div v-else-if="counter === 0 && !showFinalMessage" class="info-box__title">
 					Честитам на стрпљењу, можеш да погледаш свој поклон
 				</div>
 				<div v-else class="info-box__title">
-					Слободно се диви још који тренутак овој страници, а онда склопи лаптоп и погледај иза њега :D
+					Слободно се диви још који тренутак овој страници, а онда склопи лаптоп и погледај иза себе :D
 				</div>
-				<div v-if="counter === 33" class="gift-button" @click="startCounter">Почни да бројиш</div>
-				<div v-if="counter === 0 && !showFinalMessage" class="gift-button" @click="onShowFinalMessage">Погледај поклон</div>
+				<div v-if="counter === 33" class="gift-button info-box__button" @click="startCounter">Почни да бројиш</div>
+				<div v-if="counter === 0 && !showFinalMessage" class="gift-button info-box__button" @click="onShowFinalMessage">Погледај поклон</div>
 			</div>
 		</div>
 	</div>
@@ -51,6 +52,7 @@ export default {
 		return {
 			currentId: 7,
 			counter: 33,
+			headingHeight: 0,
 			hideButton: false,
 			hidePrev: false,
 			isCounterAnimating: false,
@@ -59,6 +61,16 @@ export default {
 			showInfoBox: false,
 			showFinalMessage: false
 		}
+	},
+	mounted() {
+		// console.dir(this.$refs.headRef.clientHeight)
+		if (this.$refs.headRef) {
+			this.headingHeight = this.$refs.headRef.clientHeight
+		}
+		window.addEventListener('resize', this.onWindowResize)
+	},
+	unmounted() {
+		window.removeEventListener('resize', this.onWindowResize)
 	},
 	methods: {
 		setAnimations() {
@@ -96,8 +108,16 @@ export default {
 			}
 		},
 		onShowFinalMessage() {
-			this.mainClass = true;
-			this.showFinalMessage = true
+			this.showInfoBox = false;
+			setTimeout(() => {
+				this.mainClass = true;
+				this.showFinalMessage = true;
+			}, 500)
+		},
+		onWindowResize() {
+			if (this.$refs.headRef) {
+				this.headingHeight = this.$refs.headRef.clientHeight
+			}
 		}
 	}
 }
@@ -124,7 +144,7 @@ body {
 		height: 100%;
 		background-image: url('./assets/img/background.jpg');
 		background-size: cover;
-		background-position: center;
+		background-position: 40%;
 		z-index: -1;
 		filter: blur(4px) sepia(1);
 	}
@@ -133,12 +153,18 @@ body {
 			filter: none;
 		}
 	}
+
+	@include tablet-up {
+		&::before {
+			background-position: center;
+		}
+	}
 }
 .counter {
 	position: absolute;
 	width: 100%;
 	height: 100%;
-	top: 0;
+	bottom: 0;
 	left: 0;
 	display: flex;
 	align-items: center;
@@ -171,10 +197,29 @@ body {
 	color: $secondaryDark;
 	background-color: rgba($color: #fff, $alpha: 0.7);
 	border-radius: 0 0 4px 4px;
+	transition: all 0.5s ease;
 	@include tablet-up {
 		padding: 32px 16px;
 		line-height: 32px;
 	}
+
+	&.is-showing {
+		border-radius: 0;
+		.heading-back {
+			height: 100vh;
+		}
+	}
+}
+
+.heading-back {
+	display: block;
+	position: absolute;
+	left: 16px;
+	top: 0;
+	background-color: rgba(255, 255, 255, 0.7);
+	width: calc(100% - 32px);
+	height: 0;
+	transition: all 0.5s ease;
 }
 
 .heading-title {
@@ -198,7 +243,7 @@ body {
 	width: 100%;
 	height: 100%;
 	left: 0;
-	top: 0;
+	bottom: 0;
 	display: flex;
 	align-items: flex-end;
 	justify-content: center;
@@ -218,35 +263,37 @@ body {
 }
 
 .info-box--final {
-	.info-box__content {
-		background-color: transparent;
-	}
 	.info-box__title {
-		color: #fff;
+		color: $secondaryLight;
     font-style: inherit;
     font-weight: 600;
     text-shadow: 2px 2px black;
-    font-size: 48px;
+    font-size: 40px;
+		line-height: 48px;
 	}
 }
 
 .info-box__content {
-	background-color: #fff;
 	padding: 16px;
-	width: calc(100% - 64px);
-	height: 60vh;
+	width: calc(100% - 32px);
+	height: 100%;
 	display: grid;
 	justify-content: center;
 	align-content: center;
 	border-radius: 4px;
+	box-sizing: border-box;
 }
 
 .info-box__title {
 	font-size: 32px;
+	line-height: 40px;
 	text-align: center;
-	margin-bottom: 32px;
 	font-style: italic;
 	color: $secondaryDark;
+}
+
+.info-box__button {
+	margin-top: 32px;
 }
 
 .gift {
@@ -255,7 +302,7 @@ body {
 
 .gift__button {
 	position: absolute;
-	top: calc(50vh - 138px);
+	top: calc(50% - 17px);
 	left: calc(50% - 75px);
 }
 
@@ -366,66 +413,45 @@ body {
 
 .gift-box--level-7 {
 	width: calc(100% - 32px);
-	height: calc(50vh - 32px);
-	top: 16px;
+	height: 80%;
+	top: 10%;
 	left: 16px;
-	@include tablet-up {
-		height: calc(65vh - 32px);
-	}
 }
 .gift-box--level-6 {
-	width: calc(100% - 64px);
-	height: calc(50vh - 64px);
-	top: 32px;
-	left: 32px;
-	@include tablet-up {
-		height: calc(65vh - 64px);
-	}
+	width: calc(100% - 80px);
+	height: 70%;
+	top: 15%;
+	left: 40px;
 }
 .gift-box--level-5 {
-	width: calc(100% - 96px);
-	height: calc(50vh - 96px);
-	top: 48px;
-	left: 48px;
-	@include tablet-up {
-		height: calc(65vh - 96px);
-	}
+	width: calc(100% - 112px);
+	height: 60%;
+	top: 20%;
+	left: 56px;
 }
 .gift-box--level-4 {
-	width: calc(100% - 128px);
-	height: calc(50vh - 128px);
-	top: 64px;
-	left: 64px;
-	@include tablet-up {
-		height: calc(65vh - 128px);
-	}
+	width: calc(100% - 144px);
+	height: 50%;
+	top: 25%;
+	left: 72px;
 }
 .gift-box--level-3 {
-	width: calc(100% - 160px);
-	height: calc(50vh - 160px);
-	top: 80px;
-	left: 80px;
-	@include tablet-up {
-		height: calc(65vh - 160px);
-	}
+	width: calc(100% - 176px);
+	height: 40%;
+	top: 30%;
+	left: 88px;
 }
 .gift-box--level-2 {
-	width: calc(100% - 192px);
-	height: calc(50vh - 192px);
-	top: 96px;
-	left: 96px;
-	@include tablet-up {
-		height: calc(65vh - 192px);
-	}
+	width: calc(100% - 208px);
+	height: 30%;
+	top: 35%;
+	left: 104px;
 }
 .gift-box--level-1 {
-	width: calc(100% - 224px);
-	height: calc(50vh - 224px);
-	top: 112px;
-	left: 112px;
-	@include tablet-up {
-		height: calc(65vh - 224px);
-	}
+	width: calc(100% - 240px);
+	height: 20%;
+	top: 40%;
+	left: 120px;
 }
 .gift-box-top {
 	position: relative;
