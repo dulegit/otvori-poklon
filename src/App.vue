@@ -36,7 +36,7 @@
 					Честитам на стрпљењу, можеш да погледаш свој поклон
 				</div>
 				<div v-else class="info-box__title">
-					Слободно се диви још који тренутак овој страници, а онда склопи лаптоп и погледај иза себе :D
+					Слободно се диви још који тренутак овој страници, а онда погледај иза себе :D
 				</div>
 				<div v-if="counter === 33" class="gift-button info-box__button" @click="startCounter">Почни да бројиш</div>
 				<div v-if="counter === 0 && !showFinalMessage" class="gift-button info-box__button" @click="onShowFinalMessage">Погледај поклон</div>
